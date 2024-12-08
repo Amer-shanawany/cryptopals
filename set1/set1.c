@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -105,5 +106,87 @@ char* hex_to_ascii(char* input)
         output[i / 2] = result;
     }
     output[input_len / 2 + 1] = '\0';
+    return output;
+}
+
+unsigned char* hex_string_to_hex(char* input)
+{
+    if (!input)
+        return NULL;
+
+    int length = strlen(input);
+    unsigned char* output = (unsigned char*)malloc(length / 2 + 1);
+
+    if (!output)
+        return NULL;
+
+    for (int x = 0; x < length; x = x + 2) {
+        char* in_ptr = input + x;
+        char temp[3] = { *in_ptr, *(in_ptr + 1), '\0' };
+        char* endptr = NULL;
+        long value = strtol(temp, &endptr, 16);
+        if (errno == ERANGE || endptr == temp) {
+            free(output);
+            return NULL;
+        }
+        *(output + (x / 2)) = (unsigned char)value;
+    }
+    *(output + (length / +1)) = '\0';
+    return output;
+}
+
+char* fixed_xor(char* a, char* b)
+{
+    if (!a || !b)
+        return NULL;
+    int length = strlen(a);
+    if (length % 2)
+        return NULL;
+
+    if (length != strlen(b))
+        return NULL;
+
+    unsigned char* first = hex_string_to_hex(a);
+    if (!first)
+        return NULL;
+
+    unsigned char* second = hex_string_to_hex(b);
+    if (!second) {
+        free(first);
+        return NULL;
+    }
+
+    char* output = malloc(length / 2 + 1);
+    for (int x = 0; x < (length / 2 + 1); x++) {
+        *(output + x) = *(first + x) ^ *(second + x);
+    }
+
+    free(first);
+    free(second);
+
+    *(output + length / 2 + 1) = '\0';
+    return output;
+}
+
+char* ascii_to_hex_string(char* input)
+{
+    if (!input)
+        return NULL;
+
+    printf("input %s\n", input);
+    int length = strlen(input) * 2;
+    char* output = (char*)malloc(length + 1);
+    if (!output)
+        return NULL;
+
+    char* in_ptr = input;
+    char* out_ptr = output;
+    while (*in_ptr) {
+        sprintf(out_ptr, "%02X", (unsigned char)*in_ptr);
+        out_ptr += 2;
+        in_ptr++;
+    }
+
+    output[length + 1] = '\0';
     return output;
 }
