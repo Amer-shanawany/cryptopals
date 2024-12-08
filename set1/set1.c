@@ -1,6 +1,9 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+#include "set1.h"
 
 const char lut[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K',
     'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
@@ -9,7 +12,7 @@ const char lut[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K',
     's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2',
     '3', '4', '5', '6', '7', '8', '9', '+', '/', '=' };
 
-void char_to_base64(char* input)
+char* char_to_base64(char* input)
 {
     unsigned int in_len = strlen(input);
 
@@ -24,7 +27,10 @@ void char_to_base64(char* input)
         out_size = in_len / 3 * 4;
     }
 
-    char output[out_size + 1];
+    char* output = malloc(out_size + 1);
+    if (!output)
+        return NULL;
+
     memset(output, '=', out_size);
 
     for (int len = 0; len < in_len; len = len + 3) {
@@ -60,12 +66,17 @@ void char_to_base64(char* input)
 
     output[out_size + 1] = '\0';
 
-    printf("%s\n", output);
+    return output;
 }
 
-void hex_to_ascii(char* input, char* output)
+char* hex_to_ascii(char* input)
 {
-    for (int i = 0; i < strlen(input); i = i + 2) {
+    unsigned int input_len = strlen(input);
+    char* output = malloc(input_len / 2 + 1);
+    if (!output)
+        return NULL;
+
+    for (int i = 0; i < input_len; i = i + 2) {
         char* c = input + i;
         unsigned int result, left, right;
 
@@ -80,7 +91,8 @@ void hex_to_ascii(char* input, char* output)
                 temp = *c - 0x37;
             } else {
                 printf("hex_to_ascii: bad input\n");
-                return;
+                free(output);
+                return NULL;
             }
             if (!x) {
                 left = temp;
@@ -92,28 +104,6 @@ void hex_to_ascii(char* input, char* output)
         result |= (right & 0x0F);
         output[i / 2] = result;
     }
-}
-
-int main(int argc, char** argv)
-{
-    if (argc != 2) {
-        printf("Usage: %s hex\n", argv[0]);
-        return 1;
-    }
-
-    int in_len = strlen(argv[1]);
-    if (!in_len) {
-        printf("error word is empty\n");
-        return 1;
-    }
-    if (in_len % 2) {
-        printf("odd input\n");
-        return 1;
-    }
-    char ascii[in_len / 2 + 1];
-    ascii[in_len / 2 + 1] = '\0';
-    hex_to_ascii(argv[1], ascii);
-    printf("%s\n", ascii);
-    char_to_base64(ascii);
-    return 0;
+    output[input_len / 2 + 1] = '\0';
+    return output;
 }
