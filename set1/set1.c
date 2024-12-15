@@ -111,7 +111,7 @@ bytes_t* hex_string_to_bytes(char* input)
 
     size_t length = strlen(input);
     if (length % 2) {
-        fprintf(stderr, "hex_string_to_bytes: odd number of characters\n");
+        fprintf(stderr, "hex_string_to_bytes: odd number of characters: %d\n", length);
         return NULL;
     }
     length /= 2;
@@ -238,25 +238,40 @@ unsigned int rate_etaoin_shrdlu(char* input)
         case 'd':
             rating += 4;
             break;
+        case 'G':
         case 'g':
             rating += 3;
             break;
+        case 'B':
         case 'b':
+        case 'C':
         case 'c':
+        case 'M':
         case 'm':
+        case 'P':
         case 'p':
+        case 'F':
         case 'f':
+        case 'H':
         case 'h':
+        case 'V':
         case 'v':
+        case 'W':
         case 'w':
+        case 'Y':
         case 'y':
         case ' ':
             rating += 2;
             break;
+        case 'K':
         case 'k':
+        case 'J':
         case 'j':
+        case 'X':
         case 'x':
+        case 'Q':
         case 'q':
+        case 'Z':
         case 'z':
             rating += 1;
             break;

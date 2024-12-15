@@ -91,7 +91,73 @@ static void test_challenge3()
     free(bytes);
 }
 
+static void test_challenge4()
+{
+    FILE* file = fopen("./set1/4.txt", "r");
+    if (!file) {
+        CU_FAIL("couldn't find the test file 4.txt");
+    }
+
+    size_t len = 0;
+    ssize_t read = 0;
+    char* line = NULL;
+    unsigned int global_rating = 0;
+    char* best_result = NULL;
+
+    while ((read = getline(&line, &len, file)) != -1) {
+        if (read > 0 && line[read - 1] == '\n')
+            line[read - 1] = '\0';
+
+        bytes_t* bytes = hex_string_to_bytes(line);
+        CU_ASSERT_PTR_NOT_NULL_FATAL(bytes);
+
+        unsigned char result_key = 0;
+        unsigned int rating = 0;
+        char output[bytes->length + 1];
+
+        for (unsigned char key = 0x0; key < 0xff; key++) {
+            for (int index = 0; index < bytes->length; index++) {
+                output[index] = bytes->data[index] ^ key;
+            }
+            output[bytes->length + 1] = '\0';
+
+            bool valid = true;
+            for (int i = 0; i < strlen(output); i++) {
+                if (!isalnum(output[i]) && !isspace(output[i])) {
+                    valid = false;
+                    break;
+                }
+            }
+
+            if (valid) {
+                unsigned int current_rate = rate_etaoin_shrdlu(output);
+                if (current_rate > rating) {
+                    result_key = key;
+                    rating = current_rate;
+                }
+            }
+        }
+
+        if (rating) {
+            for (int index = 0; index < bytes->length; index++) {
+                output[index] = bytes->data[index] ^ result_key;
+            }
+            output[bytes->length + 1] = '\0';
+            if (rating > global_rating) {
+                best_result = strdup(output);
+                global_rating = rating;
+            }
+        }
+        free(bytes);
+    }
+    printf(" result %s \n", best_result);
+
+    free(line);
+    fclose(file);
+}
+
 CUNIT_CI_RUN("set1",
     CUNIT_CI_TEST(test_challenge1),
     CUNIT_CI_TEST(test_challenge2),
-    CUNIT_CI_TEST(test_challenge3));
+    CUNIT_CI_TEST(test_challenge3),
+    CUNIT_CI_TEST(test_challenge4));
