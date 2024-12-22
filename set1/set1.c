@@ -111,7 +111,7 @@ bytes_t* hex_string_to_bytes(char* input)
 
     size_t length = strlen(input);
     if (length % 2) {
-        fprintf(stderr, "hex_string_to_bytes: odd number of characters: %d\n", length);
+        fprintf(stderr, "hex_string_to_bytes: odd number of characters: %ld\n", length);
         return NULL;
     }
     length /= 2;
@@ -150,7 +150,7 @@ char* bytes_to_hex_string(bytes_t* input)
         return NULL;
 
     for (unsigned int i = 0; i < input->length; i++) {
-        sprintf(&output[i * 2], "%2hhX", input->data[i]);
+        sprintf(&output[i * 2], "%02hhX", input->data[i]);
     }
 
     output[input->length * 2 + 1] = '\0';
@@ -279,4 +279,20 @@ unsigned int rate_etaoin_shrdlu(char* input)
     }
 
     return rating;
+}
+
+bytes_t* char_string_to_bytes(char* input)
+{
+    if (!input || !strlen(input))
+        return NULL;
+
+    size_t len = strlen(input);
+
+    bytes_t* output = new_bytes(len);
+
+    int i = 0;
+    for (char* inptr = input; inptr && *inptr != '\0', i < len; i++, inptr++)
+        output->data[i] = (unsigned char)*inptr;
+
+    return output;
 }

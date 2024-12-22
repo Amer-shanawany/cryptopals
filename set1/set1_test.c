@@ -1,8 +1,10 @@
 #include "CUnit/CUnit.h"
 #include "CUnit/CUnitCI.h"
-#include "set1.h"
+
 #include <ctype.h>
 #include <stdbool.h>
+
+#include "set1.h"
 
 static void test_challenge1()
 {
@@ -37,7 +39,6 @@ static void test_challenge2()
 
     char* result = bytes_to_hex_string(xored_bytes);
     CU_ASSERT_PTR_NOT_NULL_FATAL(result);
-
     CU_ASSERT_STRING_EQUAL(expected, result);
 
     free(result);
@@ -156,8 +157,35 @@ static void test_challenge4()
     fclose(file);
 }
 
+static void test_challenge5()
+{
+    char string[] = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
+    char* key = "ICE";
+    char* expected = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f";
+
+    bytes_t* string_bytes = char_string_to_bytes(string);
+    bytes_t* key_bytes = char_string_to_bytes(key);
+
+    for (int i = 0, k = 0; i < string_bytes->length; i++, k++) {
+        if (k >= key_bytes->length)
+            k = 0;
+
+        string_bytes->data[i] ^= key_bytes->data[k];
+    }
+
+    char* output = bytes_to_hex_string(string_bytes);
+
+    for (int i = 0; i < strlen(output); i++) {
+        output[i] = tolower(output[i]);
+        if (output[i] != expected[i])
+            printf("hex: %02x output: %c expected: %c\n", i, output[i], expected[i]);
+    }
+    CU_ASSERT_STRING_EQUAL(expected, output);
+}
+
 CUNIT_CI_RUN("set1",
     CUNIT_CI_TEST(test_challenge1),
     CUNIT_CI_TEST(test_challenge2),
     CUNIT_CI_TEST(test_challenge3),
-    CUNIT_CI_TEST(test_challenge4));
+    CUNIT_CI_TEST(test_challenge4),
+    CUNIT_CI_TEST(test_challenge5));

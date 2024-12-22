@@ -20,4 +20,6 @@ bytes_t* xor_bytes(bytes_t* fisrt, bytes_t* second);
 
 unsigned int rate_etaoin_shrdlu(char* input);
 
+bytes_t* char_string_to_bytes(char* input);
+
 #endif
