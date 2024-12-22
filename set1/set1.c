@@ -296,3 +296,26 @@ bytes_t* char_string_to_bytes(char* input)
 
     return output;
 }
+
+int hamming_distance(bytes_t* first, bytes_t* second)
+{
+    if (!first || !second)
+        return -1;
+    if (!first->data || !second->data)
+        return -1;
+    if (!first->length || !second->length)
+        return -1;
+    if (first->length != second->length)
+        return -1;
+
+    int distance = 0;
+    for (int i = 0; i < first->length; i++) {
+        char xor = first->data[i] ^ second->data[i];
+        while (xor) {
+            distance += xor&0x1;
+            xor >>= 1;
+        }
+    }
+
+    return distance;
+}

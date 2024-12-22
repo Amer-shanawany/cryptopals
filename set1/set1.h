@@ -22,4 +22,6 @@ unsigned int rate_etaoin_shrdlu(char* input);
 
 bytes_t* char_string_to_bytes(char* input);
 
+int hamming_distance(bytes_t* first, bytes_t* second);
+
 #endif

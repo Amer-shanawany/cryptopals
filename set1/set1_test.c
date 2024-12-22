@@ -183,9 +183,29 @@ static void test_challenge5()
     CU_ASSERT_STRING_EQUAL(expected, output);
 }
 
+static void test_challenge6_hamming_distance()
+{
+    char* first = "this is a test";
+    char* second = "wokka wokka!!!";
+
+    bytes_t* first_bytes = char_string_to_bytes(first);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(first_bytes);
+
+    bytes_t* second_bytes = char_string_to_bytes(second);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(second_bytes);
+
+    int distance = hamming_distance(first_bytes, second_bytes);
+    printf("distance is %d\n", distance);
+    CU_ASSERT_EQUAL(37, distance);
+
+	free_bytes(first_bytes);
+	free_bytes(second_bytes);
+}
+
 CUNIT_CI_RUN("set1",
     CUNIT_CI_TEST(test_challenge1),
     CUNIT_CI_TEST(test_challenge2),
     CUNIT_CI_TEST(test_challenge3),
     CUNIT_CI_TEST(test_challenge4),
-    CUNIT_CI_TEST(test_challenge5));
+    CUNIT_CI_TEST(test_challenge5),
+    CUNIT_CI_TEST(test_challenge6_hamming_distance));
