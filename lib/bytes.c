@@ -105,6 +105,20 @@ char* bytes_to_hex_string(bytes_t* input)
     return output;
 }
 
+char* bytes_to_string(bytes_t* input) {
+    if (!input || !input->data || !input->length)
+        return NULL;
+
+    char *result = malloc(input->length + 1);
+    if (!result)
+        return NULL;
+
+    memcpy(result, input->data, input->length);
+    result[input->length] = '\0';
+
+    return result;
+}
+
 bytes_t* bytes_xor(bytes_t* first, bytes_t* second)
 {
     if (!first || !second)

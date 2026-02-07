@@ -15,6 +15,7 @@ void bytes_free(bytes_t** bytes);
 
 bytes_t* hex_string_to_bytes(char* input);
 char* bytes_to_hex_string(bytes_t* bytes);
+char* bytes_to_string(bytes_t* bytes);
 
 bytes_t* bytes_xor(bytes_t* first, bytes_t* second);
 
