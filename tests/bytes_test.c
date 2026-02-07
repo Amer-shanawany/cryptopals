@@ -100,6 +100,32 @@ static void test_bytes_to_hex_string_invalid() {
     bytes_free(&invalid);
 }
 
+static void test_bytes_to_string() {
+    char *string = "ABCDEF";
+    bytes_t *b = bytes_new_from_string(string, strlen(string));
+    CU_ASSERT_PTR_NOT_NULL_FATAL(b);
+
+    char *result = bytes_to_string(b);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(result);
+
+    CU_ASSERT_STRING_EQUAL(result, string);
+}
+
+static void test_bytes_to_string_invalid() {
+    char *result = bytes_to_string(NULL);
+    CU_ASSERT_PTR_NULL(result);
+
+    bytes_t b;
+    result = bytes_to_string(&b);
+    CU_ASSERT_PTR_NULL(result);
+
+    unsigned char c;
+    b.data = &c;
+
+    result = bytes_to_string(&b);
+    CU_ASSERT_PTR_NULL(result);
+}
+
 static void test_bytes_xor() {
     char* expected_string = "abcdef";
     bytes_t *expected = hex_string_to_bytes(expected_string);
@@ -176,6 +202,8 @@ CUNIT_CI_RUN("test_bytes",
     CUNIT_CI_TEST(test_hex_string_to_bytes_invalid),
     CUNIT_CI_TEST(test_bytes_to_hex_string),
     CUNIT_CI_TEST(test_bytes_to_hex_string_invalid),
+    CUNIT_CI_TEST(test_bytes_to_string),
+    CUNIT_CI_TEST(test_bytes_to_string_invalid),
     CUNIT_CI_TEST(test_bytes_xor),
     CUNIT_CI_TEST(test_bytes_xor_invalid)
 );
