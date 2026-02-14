@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdbool.h>
 #include <string.h>
 #include <utils.h>
@@ -12,18 +13,16 @@ unsigned int rate_etaoin_shrdlu(char* input)
         return 0;
 
     // check if this is a readable string
-    bool valid = true;
     for (int i = 0; i < length; i++) {
-        if (input[i] < 32 || input[i] > 126)
-            break;
+        if (!isalnum(input[i]) && !isspace(input[i])) {
+            return 0;
+        }
     }
-
-    if (!valid)
-        return 0;
 
     unsigned int rating = 0;
     for (int i = 0; i < length; i++) {
-        switch (input[i]) {
+        char c = input[i];
+        switch (c) {
         case 'E':
         case 'e':
             rating += 12;
@@ -114,7 +113,7 @@ int hamming_distance(bytes_t* first, bytes_t* second)
 
     int distance = 0;
     for (int i = 0; i < first->length; i++) {
-        char xor = first->data[i] ^ second->data[i];
+        unsigned char xor = first->data[i] ^ second->data[i];
         while (xor) {
             distance += xor & 0x1;
             xor >>= 1;

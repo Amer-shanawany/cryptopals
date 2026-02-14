@@ -78,7 +78,7 @@ bytes_t* hex_string_to_bytes(char* input)
     memset(output->data, 0, length);
 
     for (unsigned int i = 0; i < length; i++) {
-        int count = sscanf(input + 2 * i, "%2hhx", output->data + i);
+        int count = sscanf(input + (2 * i), "%2hhx", output->data + i);
         if (count != 1) {
             bytes_free(&output);
             return NULL;

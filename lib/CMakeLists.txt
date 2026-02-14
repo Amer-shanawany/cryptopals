@@ -48,3 +48,23 @@ target_link_libraries(
     PUBLIC
     libbytes
 )
+
+add_library(
+    libcryptopals
+    INTERFACE
+)
+
+target_link_libraries(
+    libcryptopals
+    INTERFACE
+    libbytes
+    libbase64
+    libutils
+)
+
+target_include_directories(
+    libcryptopals
+    INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+    $<INSTALL_INTERFACE:include>
+)
