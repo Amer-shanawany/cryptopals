@@ -24,6 +24,8 @@ endif()
 include(CTest)
 enable_testing()
 
-add_subdirectory(set1)
 add_subdirectory(lib)
 add_subdirectory(tests)
+
+# solutions
+add_subdirectory(set1)
