@@ -3,8 +3,8 @@
 
 #include <bytes.h>
 
-unsigned int rate_etaoin_shrdlu(char* input);
-
-int hamming_distance(bytes_t* first, bytes_t* second);
+float bytes_rate_etaoin_shrdlu(bytes_t *input);
+float bytes_bigram_analysis(bytes_t *input);
+unsigned int hamming_distance(bytes_t* first, bytes_t* second);
 
 #endif // _UTILS_H_

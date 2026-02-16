@@ -1,115 +1,77 @@
 #include <ctype.h>
 #include <stdbool.h>
-#include <string.h>
 #include <utils.h>
 
-unsigned int rate_etaoin_shrdlu(char* input)
-{
-    if (!input)
+// https://norvig.com/mayzner.html
+
+float ratings_EN[256] = {
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0,
+    /* A - Z */
+    8.04, 1.48, 3.34, 3.82, 12.49, 2.40, 1.87, 5.05,
+    7.57, 0.16, 0.54, 4.07, 2.51, 7.23, 7.64, 2.14,
+    0.12, 6.28, 6.51, 9.28, 2.73, 1.05, 1.68, 0.23,
+    1.66, 0.09, 
+
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    /* a - z */
+    8.04, 1.48, 3.34, 3.82, 12.49, 2.40, 1.87, 5.05,
+    7.57, 0.16, 0.54, 4.07, 2.51, 7.23, 7.64, 2.14,
+    0.12, 6.28, 6.51, 9.28, 2.73, 1.05, 1.68, 0.23,
+    1.66, 0.09, 
+
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0
+};
+
+
+float bytes_rate_etaoin_shrdlu(bytes_t *input) {
+    if (!input || !input->data || ! input->length)
         return 0;
 
-    size_t length = strlen(input);
-    if (!length)
-        return 0;
+    float rating = 0;
 
-    // check if this is a readable string
-    for (int i = 0; i < length; i++) {
-        if (!isalnum(input[i]) && !isspace(input[i])) {
-            return 0;
-        }
-    }
-
-    unsigned int rating = 0;
-    for (int i = 0; i < length; i++) {
-        char c = input[i];
-        switch (c) {
-        case 'E':
-        case 'e':
-            rating += 12;
-            break;
-        case 'A':
-        case 'a':
-        case 'I':
-        case 'i':
-            rating += 9;
-            break;
-        case 'O':
-        case 'o':
-            rating += 8;
-            break;
-        case 'N':
-        case 'n':
-        case 'R':
-        case 'r':
-        case 'T':
-        case 't':
-            rating += 6;
-            break;
-        case 'L':
-        case 'l':
-        case 'S':
-        case 's':
-        case 'U':
-        case 'u':
-        case 'D':
-        case 'd':
-            rating += 4;
-            break;
-        case 'G':
-        case 'g':
-            rating += 3;
-            break;
-        case 'B':
-        case 'b':
-        case 'C':
-        case 'c':
-        case 'M':
-        case 'm':
-        case 'P':
-        case 'p':
-        case 'F':
-        case 'f':
-        case 'H':
-        case 'h':
-        case 'V':
-        case 'v':
-        case 'W':
-        case 'w':
-        case 'Y':
-        case 'y':
-        case ' ':
-            rating += 2;
-            break;
-        case 'K':
-        case 'k':
-        case 'J':
-        case 'j':
-        case 'X':
-        case 'x':
-        case 'Q':
-        case 'q':
-        case 'Z':
-        case 'z':
-            rating += 1;
-            break;
-		default:
-			break;
-        }
+    for (int i = 0; i < input->length; i++) {
+        unsigned char c = input->data[i];
+        float char_rate = ratings_EN[c];
+        rating += char_rate;
     }
 
     return rating;
 }
 
-int hamming_distance(bytes_t* first, bytes_t* second)
+unsigned int hamming_distance(bytes_t* first, bytes_t* second)
 {
     if (!first || !second)
-        return -1;
+        return 0;
     if (!first->data || !second->data)
-        return -1;
+        return 0;
     if (!first->length || !second->length)
-        return -1;
+        return 0;
     if (first->length != second->length)
-        return -1;
+        return 0;
 
     int distance = 0;
     for (int i = 0; i < first->length; i++) {
@@ -121,4 +83,81 @@ int hamming_distance(bytes_t* first, bytes_t* second)
     }
 
     return distance;
+}
+
+struct biagram {
+    unsigned char bi[2];
+    float weight;
+};
+
+struct biagram biagrams[] = {
+    {"TH", 100.3},
+    {"HE", 86.7},
+    {"IN", 68.6},
+    {"ER", 57.8},
+    {"AN", 56.0},
+    {"RE", 52.3},
+    {"ON", 49.6},
+    {"AT", 41.9},
+    {"EN", 41.0},
+    {"ND", 38.1},
+    {"TI", 37.9},
+    {"ES", 37.8},
+    {"OR", 36.0},
+    {"TE", 34.0},
+    {"OF", 33.1},
+    {"ED", 32.9},
+    {"IS", 31.8},
+    {"IT", 31.7},
+    {"AL", 30.7},
+    {"AR", 30.3},
+    {"ST", 29.7},
+    {"TO", 29.4},
+    {"NT", 29.4},
+    {"NG", 26.9},
+    {"SE", 26.3},
+    {"HA", 26.1},
+    {"AS", 24.6},
+    {"OU", 24.5},
+    {"IO", 23.5},
+    {"LE", 23.4},
+    {"VE", 23.3},
+    {"CO", 22.4},
+    {"ME", 22.4},
+    {"DE", 21.6},
+    {"HI", 21.5},
+    {"RI", 20.5},
+    {"RO", 20.5},
+    {"IC", 19.7},
+    {"NE", 19.5},
+    {"EA", 19.4},
+    {"RA", 19.3},
+    {"CE", 18.4},
+    {"LI", 17.6},
+    {"CH", 16.9},
+    {"LL", 16.3},
+    {"BE", 16.2},
+    {"MA", 15.9},
+    {"SI", 15.5},
+    {"OM", 15.4},
+    {"UR", 15.3},
+};
+
+float bytes_bigram_analysis(bytes_t *input) {
+    if (!input || !input->data || input->length < 2)
+        return 0;
+
+    float weights = 0;
+    for (int x = 0; x < input->length - 1; x++) {
+        for (int y = 0; y < sizeof(biagrams) / sizeof(biagrams[0]); y++) {
+            char first = input->data[x];
+            char second = input->data[x+1];
+
+            if (toupper(first) == biagrams[y].bi[0] &&
+                toupper(second) == biagrams[y].bi[1])
+                weights += biagrams[y].weight;
+        }
+    }
+
+    return weights;    
 }
