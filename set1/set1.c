@@ -1,13 +1,12 @@
 #include <CUnit/CUnit.h>
 #include <CUnit/CUnitCI.h>
 
-#include <cryptopals.h>
-
 #include <ctype.h>
 #include <stdbool.h>
 #include <float.h>
 #include <stddef.h>
 
+#include <cryptopals.h>
 
 static void test_challenge1()
 {
@@ -58,54 +57,52 @@ static void test_challenge3()
     CU_ASSERT_PTR_NOT_NULL_FATAL(bytes);
 
     unsigned char result_key = 0;
-    unsigned int rating = 0;
-    char* output = (char*) malloc(bytes->length + 1);
+    float rating = 0;
 
-    for (unsigned char key = 0x0; key < 0xff; key++) {
+    for (unsigned char key = 0x1; key < 0xff; key++) {
+        bytes_t *output = bytes_new(bytes->length);
+
         for (int index = 0; index < bytes->length; index++) {
-            output[index] = bytes->data[index] ^ key;
+            output->data[index] = bytes->data[index] ^ key;
         }
-        output[bytes->length + 1] = '\0';
 
-        bool valid = true;
-        for (int i = 0; i < strlen(output); i++) {
-            if (!isprint(output[i])) {
-                valid = false;
-                break;
-            }
+        float current_rate = bytes_rate_etaoin_shrdlu(output);
+        current_rate += bytes_bigram_analysis(output);
+        if (current_rate > rating) {
+            result_key = key;
+            rating = current_rate;
         }
-        if (valid) {
-            unsigned int current_rate = rate_etaoin_shrdlu(output);
-            if (current_rate > rating) {
-                result_key = key;
-                rating = current_rate;
-            }
-        }
+        bytes_free(&output);
     }
 
-    for (int index = 0; index < bytes->length; index++) {
-        output[index] = bytes->data[index] ^ result_key;
-    }
-    output[bytes->length + 1] = '\0';
-    CU_ASSERT_NOT_EQUAL_FATAL(rating, 0);
-    printf(" key: %c, rating: %d, output: %s ", result_key, rating, output);
+    CU_ASSERT_NOT_EQUAL(rating, 0);
 
-    free(output);
-    free(bytes);
+    bytes_t *result = bytes_new(bytes->length);
+
+    for (int index = 0; index < bytes->length; index++)
+        result->data[index] = bytes->data[index] ^ result_key;
+
+    printf(" key: %c, rating: %f, output:", result_key, rating);
+    for (int i = 0; i < result->length; i++)
+        printf("%c", result->data[i]);
+    printf("\n");
+
+    bytes_free(&result);
+    bytes_free(&bytes);
 }
 
 static void test_challenge4()
 {
     FILE* file = fopen("4.txt", "r");
     if (!file) {
-        CU_FAIL("couldn't find the test file 4.txt");
+        CU_FAIL_FATAL("couldn't find the test file 4.txt");
     }
 
     size_t len = 0;
     ssize_t read = 0;
     char* line = NULL;
-    unsigned int global_rating = 0;
-    char* best_result = NULL;
+    float global_rating = 0;
+    bytes_t * best_result = NULL;
     char the_key;
 
     while ((read = getline(&line, &len, file)) != -1) {
@@ -116,36 +113,41 @@ static void test_challenge4()
         CU_ASSERT_PTR_NOT_NULL_FATAL(bytes);
 
         unsigned char result_key = 0;
-        unsigned int rating = 0;
-        char output[bytes->length + 1];
+        float rating = 0;
+        bytes_t *output = bytes_new(bytes->length);
 
         for (unsigned char key = 0x1; key < 0xff; key++) {
             for (int index = 0; index < bytes->length; index++) {
-                output[index] = bytes->data[index] ^ key;
+                output->data[index] = bytes->data[index] ^ key;
             }
-            output[bytes->length + 1] = '\0';
 
-            unsigned int current_rate = rate_etaoin_shrdlu(output);
+            float current_rate = bytes_rate_etaoin_shrdlu(output);
+            current_rate += bytes_bigram_analysis(output);
             if (current_rate > rating) {
                 result_key = key;
                 rating = current_rate;
             }
         }
 
-        if (rating) {
-            for (int index = 0; index < bytes->length; index++) {
-                output[index] = bytes->data[index] ^ result_key;
-            }
-            output[bytes->length + 1] = '\0';
-            if (rating > global_rating) {
-                best_result = strdup(output);
-                the_key = result_key;
-                global_rating = rating;
-            }
+        if(!best_result)
+            best_result = bytes_new(bytes->length);
+    
+        for (int index = 0; index < bytes->length; index++) {
+            best_result->data[index] = bytes->data[index] ^ result_key;
+        }
+        if (rating > global_rating) {
+            the_key = result_key;
+            global_rating = rating;
         }
         bytes_free(&bytes);
+        bytes_free(&output);
     }
-    printf(" key is: %c, decrypted string: %s \n", the_key, best_result);
+
+
+    printf(" key is: %c, decrypted string: ", the_key);
+    for (int i = 0; i < best_result->length; i++)
+        printf("%c", best_result->data[i]);
+    printf("\n");
 
     free(line);
     fclose(file);
@@ -199,10 +201,12 @@ static void test_challenge6_hamming_distance()
 static void test_challenge6()
 {
 	int ret = -1;
-	int KEYSIZE = 0;
-	double low_distance = DBL_MAX;
+	size_t key_length = 0;
+	float low_distance = FLT_MAX;
 	FILE * file = fopen("6.txt", "r");
-	CU_ASSERT_PTR_NOT_NULL_FATAL(file);
+    if (!file) {
+        CU_FAIL_FATAL("couldn't find the test file 6.txt");
+    }
 
 
 	size_t length = 0;
@@ -233,110 +237,104 @@ static void test_challenge6()
 	CU_ASSERT_PTR_NOT_NULL_FATAL(encrypted_bytes);
 	free(encrypted);
 
+    int rounds = 6;
+    for (size_t key_size = 2; key_size <= 40; key_size++) {
+		float g_distance = 0;
 
-    for (size_t keysize = 2; keysize <= 40; keysize++) {
-		int g_distance = 0;
-
-		for (int i = 0; i < 4; i++) {
-            size_t offset = keysize * i * 2;
+		for (int i = 0; i < rounds; i++) {
+            size_t offset = key_size * i * 2;
         
-			bytes_t * first_bytes = bytes_new(keysize);
+			bytes_t * first_bytes = bytes_new(key_size);
 			CU_ASSERT_PTR_NOT_NULL_FATAL(first_bytes);
-			memcpy(first_bytes->data, encrypted_bytes->data + offset, keysize);
+			memcpy(first_bytes->data, encrypted_bytes->data + offset, key_size);
     
-			bytes_t * second_bytes = bytes_new(keysize);
+			bytes_t * second_bytes = bytes_new(key_size);
 			CU_ASSERT_PTR_NOT_NULL_FATAL(second_bytes);
-			memcpy(second_bytes->data, encrypted_bytes->data + offset + keysize, keysize);
+			memcpy(second_bytes->data, encrypted_bytes->data + offset + key_size, key_size);
 
-			double distance = hamming_distance(first_bytes, second_bytes);
-			distance /= keysize;
-			g_distance += distance;
+			unsigned int distance = hamming_distance(first_bytes, second_bytes);
+			g_distance += (float) distance / rounds;
 
 			bytes_free(&first_bytes);
 			bytes_free(&second_bytes);
 		}
 
-		// g_distance /= 4;
+		g_distance /= key_size;
 
 		if (g_distance < low_distance) {
 			low_distance = g_distance;
-			KEYSIZE = keysize;
-			printf("low: %f global: %d Keysize: %ld\n", low_distance, g_distance, keysize);
+			key_length = key_size;
 		}
 	}
 
-	printf("# keysize: %d, distance: %f\n", KEYSIZE, low_distance);
+	printf("# key_size: %ld, distance: %f\n", key_length, low_distance);
 
-	bytes_t **blocks = malloc(sizeof(bytes_t *) * KEYSIZE);
+	bytes_t **blocks = malloc(sizeof(bytes_t *) * key_length);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(blocks);
 
-    size_t block_length = encrypted_bytes->length / KEYSIZE;
-	for (int block = 0; block < KEYSIZE; block++) {
+    size_t block_length = encrypted_bytes->length / key_length;
+	for (int block = 0; block < key_length; block++) {
 		blocks[block] = bytes_new(block_length);
 		CU_ASSERT_PTR_NOT_NULL_FATAL(blocks[block]);
 
 		for (int index = 0; index < block_length; index++) {
-            size_t offset = block + (index * KEYSIZE);
+            size_t offset = block + (index * key_length);
 			unsigned char * src = encrypted_bytes->data + offset;
             unsigned char * dest = blocks[block]->data + index;
 			memcpy(dest, src, 1);
 		}
 	}
-    // 0  1  2  3  4 
-    // 5  6  7  8  9 
-    // 10 11 12 13 14
-    // 15 16 17 18 19
-    // 20 21 22 23 24
 
-	char * the_key = malloc(KEYSIZE);
+    bytes_t *the_key = bytes_new(key_length);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(the_key);
-    memset(the_key, 0x0, KEYSIZE);
 
-
-	char *output = malloc(block_length + 1);
+    bytes_t *output = bytes_new(block_length);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(output);
 
-	for (int block = 0; block < KEYSIZE; block++) {
-		unsigned int rating = 0;
+	for (int block = 0; block < key_length; block++) {
+		float  rating = 0;
 		for (unsigned char key = 0x1; key < 0xFF; key++) {
 
 			for (int i = 0; i < blocks[block]->length; i++)
-				output[i] = blocks[block]->data[i] ^ key;
-
-            output[block_length] = '\0';
+				output->data[i] = blocks[block]->data[i] ^ key;
 	
-			unsigned int current_rating = rate_etaoin_shrdlu(output);
-			if (current_rating > rating) {
-				the_key[block] = key;
+			float current_rating = bytes_rate_etaoin_shrdlu(output);
+            if (current_rating > rating) {
+                the_key->data[block] = key;
                 rating = current_rating;
             }
 		}
 	}
-	free(output);
+    for (int block = 0; block < key_length; block++)
+		bytes_free(&blocks[block]);
+	free(blocks);
 
+	bytes_free(&output);
 	printf("the key: ");
-	for (int i = 0; i < KEYSIZE; i++)
-		printf("0x%x ", the_key[i]);
+	for (int i = 0; i < key_length; i++)
+		printf("%c", the_key->data[i]);
 	printf("\n");
 
 	// decrypting the file
-	char * decrypted = malloc(encrypted_bytes->length + 1);
+    bytes_t *decrypted = bytes_new(encrypted_bytes->length);
 	for (int x = 0, y = 0; x < encrypted_bytes->length; x++, y++) {
-		if (y >= KEYSIZE)
+		if (y >= key_length)
 			y = 0;
-		decrypted[x] = encrypted_bytes->data[x] ^ the_key[y];
+		decrypted->data[x] = encrypted_bytes->data[x] ^ the_key->data[y];
 	}
 
-	decrypted[encrypted_bytes->length + 1] = '\0';
-
-	printf("decrypted text:\n%s\n", decrypted);
-	free(decrypted);
+    printf("Decrypted text:\n");
+    for (int i = 0; i < decrypted->length; i++){
+        char c = decrypted->data[i];
+        if (isprint(c)) {
+            c = tolower(c);
+            printf("%c", c);
+        }
+    }
+    printf("\n");
+	bytes_free(&decrypted);
 	bytes_free(&encrypted_bytes);
-
-	free(the_key);
-	for (int block = 0; block < KEYSIZE; block++)
-		bytes_free(&blocks[block]);
-	free(blocks);
+	bytes_free(&the_key);
 }
 
 CUNIT_CI_RUN("set1",
