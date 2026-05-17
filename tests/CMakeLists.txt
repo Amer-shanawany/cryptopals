@@ -41,3 +41,18 @@ target_link_libraries(
 )
 
 add_test(NAME utils_test COMMAND  $<TARGET_FILE:utils_test>)
+
+
+add_executable(
+	aes_test
+	aes_test.c
+)
+
+target_link_libraries(
+	aes_test
+    PRIVATE
+	libaes
+	cunit
+)
+
+add_test(NAME aes_test COMMAND  $<TARGET_FILE:aes_test>)

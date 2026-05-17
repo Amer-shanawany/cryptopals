@@ -68,3 +68,24 @@ target_include_directories(
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
     $<INSTALL_INTERFACE:include>
 )
+
+add_library(
+	libaes
+	SHARED
+	aes.c
+)
+
+target_link_libraries(
+    libaes
+    INTERFACE
+    libbytes
+    libutils
+)
+
+
+target_include_directories(
+    libaes
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+    $<INSTALL_INTERFACE:include>
+)
