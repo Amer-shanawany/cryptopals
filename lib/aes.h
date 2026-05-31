@@ -8,24 +8,35 @@
 #define STATE_ROWS STATE_LENGTH
 #define STATE_COLS STATE_LENGTH
 
-// // the state
-// struct aes_state {
-//     unsigned char ** ptr;
-// };
-
-// struct aes_state * aes_state_new();
-
-struct aes_state {
-    unsigned char arr[16];
+enum aes {
+	AES_128 = 128,
+    AES_192 = 192,
+	AES_256 = 256,
 };
 
-void aes_state_free(struct aes_state ** state);
-struct aes_state * aes_state_new(bytes_t * input);
+enum aes_key_size {
+    AES_128_KEY_SIZE = 4,
+    AES_192_KEY_SIZE = 6,
+    AES_256_KEY_SIZE = 8,
+};
 
+enum aes_key_rounds {
+    AES_128_KEY_ROUNDS = 10,
+    AES_192_KEY_ROUNDS = 12,
+    AES_256_KEY_ROUNDS = 14,
+};
 
-inline unsigned int get_state_row(unsigned int index);
-inline unsigned int get_state_column(unsigned int index);
-inline unsigned int get_output_index(unsigned int row, unsigned int column);
+struct aes_context {
+	enum aes aes;
+	enum aes_key_size key_size;
+	enum aes_key_rounds key_rounds;
+	bytes_t * state;
+	bytes_t * key_schedule;
+	bytes_t * key;
+};
 
+struct aes_context* aes_init_context(enum aes aes);
+void aes_free_context(struct aes_context ** ctx);
+int aes_key_expansion(struct aes_context * ctx);
 
 #endif//_AES_H_

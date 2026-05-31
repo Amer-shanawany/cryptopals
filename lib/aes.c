@@ -4,148 +4,104 @@
 #include <stdbool.h>
 #include <string.h>
 
-// the state
 #define STATE_SIZE 16
 #define STATE_LENGTH 4
 #define STATE_ROWS STATE_LENGTH
 #define STATE_COLS STATE_LENGTH
 
-// struct aes_state * aes_state_new() {
-//     struct aes_state * state = malloc(sizeof(struct aes_state));
-//     if (!state) {
-//         return NULL;
-//     }
+struct aes_context* aes_init_context(enum aes aes) {
+    struct aes_context * ctx = malloc(sizeof(struct aes_context)); 
 
-//     state->ptr = malloc(STATE_ROWS * sizeof(unsigned char *));
-//     if (!state->ptr) {
-//         free(state);
-//         return  NULL;
-//     }
+	if (!ctx)
+		return NULL;
 
+	switch (aes) {
+		case AES_128:
+			ctx->key_size = AES_128_KEY_SIZE;
+			ctx->key_rounds = AES_128_KEY_ROUNDS;
+		  break;
+		case AES_192:
+			ctx->key_size = AES_192_KEY_SIZE;
+			ctx->key_rounds = AES_192_KEY_ROUNDS;
+		  break;
+		case AES_256:
+			ctx->key_size = AES_256_KEY_SIZE;
+			ctx->key_rounds = AES_256_KEY_ROUNDS;
+		  break;
+		default:
+		  return NULL;
+	}
 
-//     for (int i = 0; i < STATE_ROWS; i++) {
-//         state->ptr[i] = malloc(STATE_COLS * sizeof(unsigned char *));
-//         if (!state->ptr[i]) {
-//             free(state->ptr);
-//             state->ptr = NULL;
-//             free(state);
-//             state = NULL;
-//             return NULL;
-//         }
-//     }
+	ctx->aes = aes;
 
-//     return state;
-// }
+	ctx->state = bytes_new(STATE_SIZE);
+	if (!ctx->state) {
+		free(ctx);
+		return NULL;
+	}
 
-// void aes_state_free(struct aes_state ** state) {
-//     if(*state) {
-//         for (int i = 0; i < STATE_ROWS; i++) {
-//             if ((*state)->ptr[i]) { 
-//                 free((*state)->ptr[i]);
-//                 (*state)->ptr[i] = NULL;
-//             }
-//         }
+	ctx->key_schedule = bytes_new((ctx->key_rounds * 4 + 4) * 4);
+	if (!ctx->key_schedule) {
+		bytes_free(&ctx->state);
+		free(ctx);
+		return NULL;
+	}
 
-//         if ((*state)->ptr) {
-//             free((*state)->ptr);
-//             (*state)->ptr = NULL;
-//         }
+	ctx->key = bytes_new(ctx->key_size);
+	if (!ctx->key){
+		bytes_free(&ctx->key_schedule);
+		bytes_free(&ctx->state);
+		free(ctx);
+		return NULL;
+	}
 
-//         free(*state);
-//         *state = NULL;
-//     }
-// }
+	return ctx;
+}
 
-struct aes_key_schedule {
-    unsigned char * key;
+void aes_free_context(struct aes_context ** ctx) {
+	if (*ctx) {
+		bytes_free(&(*ctx)->key);
+		bytes_free(&(*ctx)->key_schedule);
+		bytes_free(&(*ctx)->key);
+		free(*ctx);
+		*ctx = NULL;
+	}
+}
+
+// Table 4. SBOX()
+const unsigned char subtitution_box[16][16] = {
+	{ 0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76 },
+	{ 0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0 },
+	{ 0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15 },
+	{ 0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05, 0x9a, 0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27, 0xb2, 0x75 },
+	{ 0x09, 0x83, 0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0, 0x52, 0x3b, 0xd6, 0xb3, 0x29, 0xe3, 0x2f, 0x84 },
+	{ 0x53, 0xd1, 0x00, 0xed, 0x20, 0xfc, 0xb1, 0x5b, 0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58, 0xcf },
+	{ 0xd0, 0xef, 0xaa, 0xfb, 0x43, 0x4d, 0x33, 0x85, 0x45, 0xf9, 0x02, 0x7f, 0x50, 0x3c, 0x9f, 0xa8 },
+	{ 0x51, 0xa3, 0x40, 0x8f, 0x92, 0x9d, 0x38, 0xf5, 0xbc, 0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2 },
+	{ 0xcd, 0x0c, 0x13, 0xec, 0x5f, 0x97, 0x44, 0x17, 0xc4, 0xa7, 0x7e, 0x3d, 0x64, 0x5d, 0x19, 0x73 },
+	{ 0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a, 0x90, 0x88, 0x46, 0xee, 0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb },
+	{ 0xe0, 0x32, 0x3a, 0x0a, 0x49, 0x06, 0x24, 0x5c, 0xc2, 0xd3, 0xac, 0x62, 0x91, 0x95, 0xe4, 0x79 },
+	{ 0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e, 0xa9, 0x6c, 0x56, 0xf4, 0xea, 0x65, 0x7a, 0xae, 0x08 },
+	{ 0xba, 0x78, 0x25, 0x2e, 0x1c, 0xa6, 0xb4, 0xc6, 0xe8, 0xdd, 0x74, 0x1f, 0x4b, 0xbd, 0x8b, 0x8a },
+	{ 0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e, 0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e },
+	{ 0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf },
+	{ 0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16 }
 };
 
-//aes_block_cipher_key_size
-enum aes_key_size { // 4 * (NR + 1) words
-    AES_128_KEY_SIZE = 4, // => 20
-    AES_192_KEY_SIZE = 6, // => 28
-    AES_256_KEY_SIZE = 8, // => 36
-};
 
-enum aes_key_rounds {
-    AES_128_KEY_ROUNDS = 10,
-    AES_192_KEY_ROUNDS = 12,
-    AES_256_KEY_ROUNDS = 14,
-};
-
-struct aes_context {
-    // aes_key_size
-    // aes_key_rounds
-    // ptr to state
-    // ptr to key s
-};
-
-// Table 5. Round constants
-// j Rcon[ j]
+// Table 5. Round constantsRcon[j]
 const unsigned char round_constant[10][4] = {
-    // 1 [01,00,00,00]
     {0x01, 0x0 ,0x0, 0x0},
-    // 2 [02,00,00,00]
     {0x02, 0x0 ,0x0, 0x0},
-    // 3 [04,00,00,00] 
     {0x04, 0x0 ,0x0, 0x0},
-    // 4 [08,00,00,00]
     {0x08, 0x0 ,0x0, 0x0},
-    // 5 [10,00,00,00]
     {0x10, 0x0 ,0x0, 0x0},
-    // 6 [20,00,00,00]
     {0x20, 0x0 ,0x0, 0x0},
-    // 7 [40,00,00,00]
     {0x40, 0x0 ,0x0, 0x0},
-    // 8 [80,00,00,00]
     {0x80, 0x0 ,0x0, 0x0},
-    // 9 [1b,00,00,00]
     {0x1b, 0x0 ,0x0, 0x0},
-    // 10 [36,00,00,00]
     {0x36, 0x0 ,0x0, 0x0},
 };
-
-
-bool aes_key_verify(enum aes_key_size key_size, bytes_t * key) {
-    if (!key)
-        return false;
-
-    if (!key->data)
-        return false;
-
-    if (key->length != key_size)
-        return false;
-
-    return true;
-}
-
-struct aes_key_schedule * aes_key_schedule_new(enum aes_key_size key_size, bytes_t * key) {
-    if (!aes_key_verify(key_size, key))
-        return NULL;
-
-    
-    return NULL;
-}
-
-struct aes_key_word {
-    unsigned char * a0;    
-    unsigned char * a1;
-    unsigned char * a2;
-    unsigned char * a3;
-};
-
-inline void aes_key_rotword(struct aes_key_word * word) {
-    unsigned char * temp = word->a0;
-    word->a0 = word->a1; 
-    word->a1 = word->a2; 
-    word->a2 = word->a3; 
-    word->a3 = temp; 
-}
-
-// needs ROTWORD and SUBWORD
-// aes_key_expansion() {
-// 
-// }
 
 inline unsigned int get_state_row(unsigned int index) {
     return index % 4;
@@ -159,45 +115,13 @@ inline unsigned int get_output_index(unsigned int row, unsigned int column) {
     return row + (column * 4);
 }
 
-void aes_state_free(struct aes_state ** state) {
-    if (*state) {
-        free(*state);
-        *state = NULL;
-    }
-}
-
-bytes_t * aes_state_input(char * input) {
-    if (!input || strlen( input) != STATE_SIZE)
-        return NULL;
-
-    return bytes_new_from_string(input, STATE_SIZE);
-}
-
-struct aes_state * aes_state_new(bytes_t * input) {
-    if (!input || !input->data || input->length != STATE_SIZE)
-        return NULL;
-
-    struct aes_state * state = malloc(sizeof(struct aes_state));
-    if (!state)
-        return NULL;
-
-    memcpy(state->arr, input->data, STATE_SIZE);    
-
-    return state;
-}
-
-// Key Expansion
 
 // AES steps
 int aes_cipher(char * input, unsigned char * expaned_key, enum aes_key_rounds rounds) {
     // 1 input -> state
-    bytes_t *input_bytes = aes_state_input(input);
+    bytes_t *input_bytes = bytes_new_from_string(input, STATE_SIZE);
     if (!input_bytes)
         return -1;
-
-    struct aes_state * state = aes_state_new(input_bytes);
-    if (!state)
-        return -2;
 
     // 2 add_round_key
 
@@ -210,7 +134,6 @@ int aes_cipher(char * input, unsigned char * expaned_key, enum aes_key_rounds ro
     //  SUBBYTES
     //  SHIFTROWS
     //  MIXCOLUMNS
-
 
     return 0;
 }
@@ -226,9 +149,9 @@ int aes_invcipher();
 // Mix Column (diffusion) if not Last round
 // Key addition
 
-// SubKey 
+// SubKey
 
-unsigned char aes_xTimes(unsigned char b, unsigned char c) {
+unsigned char aes_x_times(unsigned char b, unsigned char c) {
     unsigned char result = 0;
 
     while (c) {
@@ -244,3 +167,59 @@ unsigned char aes_xTimes(unsigned char b, unsigned char c) {
 
     return result;
 }
+
+void aes_rotword(unsigned char * word) {
+	unsigned char temp = *word;
+	*(word + 0) = *(word + 1);
+	*(word + 1) = *(word + 2);
+	*(word + 2) = *(word + 3);
+	*(word + 3) = temp;
+}
+
+void aes_subword(unsigned char *word) {
+	for (int i = 0; i < 4; i++) {
+		unsigned char col = *(word + i) >> 4;
+		unsigned char row = *(word + i) & 0x0F;
+		*(word + i) = subtitution_box[col][row];
+	}
+}
+
+int aes_key_expansion(struct aes_context * ctx) {
+	if (!ctx) {
+		return 1;
+	}
+
+	unsigned char * ks = ctx->key_schedule->data;
+
+	for (int i = 0; i <= ctx->key_size - 1; i++) {
+		ks[0 + (i * 4)] = ctx->key->data[0 + (i * 4)];
+		ks[1 + (i * 4)] = ctx->key->data[1 + (i * 4)];
+		ks[2 + (i * 4)] = ctx->key->data[2 + (i * 4)];
+		ks[3 + (i * 4)] = ctx->key->data[3 + (i * 4)];
+	}
+
+	int limit = ctx->key_rounds * 4 + 3;
+	for (int i = ctx->key_size; i <= limit; i++) {
+		unsigned char temp[4];
+		temp[0] = ks[ 0 + ((i - 1) * 4)];
+		temp[1] = ks[ 1 + ((i - 1) * 4)];
+		temp[2] = ks[ 2 + ((i - 1) * 4)];
+		temp[3] = ks[ 3 + ((i - 1) * 4)];
+
+		if (!(i % ctx->key_size)) {
+			aes_rotword(temp);
+			aes_subword(temp);
+			temp[0] ^= round_constant[i / ctx->key_size - 1][0];
+		} else if (ctx->aes == AES_256 && (i % ctx->key_size == 4)) {
+			aes_subword(temp);
+		}
+
+		ks[0 + (i * 4)] = ks[0 + ((i - ctx->key_size) * 4)] ^ temp[0];
+		ks[1 + (i * 4)] = ks[1 + ((i - ctx->key_size) * 4)] ^ temp[1];
+		ks[2 + (i * 4)] = ks[2 + ((i - ctx->key_size) * 4)] ^ temp[2];
+		ks[3 + (i * 4)] = ks[3 + ((i - ctx->key_size) * 4)] ^ temp[3];
+	}
+
+	return 0;
+}
+
