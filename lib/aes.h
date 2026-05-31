@@ -39,4 +39,6 @@ struct aes_context* aes_init_context(enum aes aes);
 void aes_free_context(struct aes_context ** ctx);
 int aes_key_expansion(struct aes_context * ctx);
 
+void aes_shiftrows(unsigned char * state);
+
 #endif//_AES_H_

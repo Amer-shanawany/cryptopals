@@ -176,11 +176,15 @@ void aes_rotword(unsigned char * word) {
 	*(word + 3) = temp;
 }
 
+void aes_subbyte(unsigned char *byte) {
+	unsigned char col = *byte >> 4;
+	unsigned char row = *byte & 0x0F;
+	*byte = subtitution_box[col][row];
+}
+
 void aes_subword(unsigned char *word) {
 	for (int i = 0; i < 4; i++) {
-		unsigned char col = *(word + i) >> 4;
-		unsigned char row = *(word + i) & 0x0F;
-		*(word + i) = subtitution_box[col][row];
+		aes_subbyte(word + i);
 	}
 }
 
@@ -223,3 +227,24 @@ int aes_key_expansion(struct aes_context * ctx) {
 	return 0;
 }
 
+void aes_swap_bytes(unsigned char *a, unsigned char *b) {
+	unsigned char temp = *a;
+	*a = *b;
+	*b = temp;
+}
+
+void aes_shiftrows(unsigned char * state) {
+	// 2nd row
+	aes_swap_bytes(state + 1, state + 5);
+	aes_swap_bytes(state + 5, state + 9);
+	aes_swap_bytes(state + 9, state + 13);
+
+	// 3rd row
+	aes_swap_bytes(state + 2, state + 10);
+	aes_swap_bytes(state + 6, state + 14);
+
+	// 4th row
+	aes_swap_bytes(state + 3, state + 7);
+	aes_swap_bytes(state + 3, state + 11);
+	aes_swap_bytes(state + 3, state + 15);
+}
