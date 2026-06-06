@@ -40,5 +40,6 @@ void aes_free_context(struct aes_context ** ctx);
 int aes_key_expansion(struct aes_context * ctx);
 
 void aes_shiftrows(unsigned char * state);
+void aes_mix_columns(unsigned char * state);
 
 #endif//_AES_H_

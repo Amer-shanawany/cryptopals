@@ -99,7 +99,29 @@ void test_aes_shiftrows() {
         CU_ASSERT_EQUAL(expected[i], state[i]);
 }
 
+void test_aes_mix_columns() {
+    unsigned char state[] = {
+        0x85, 0x19, 0xBC, 0xED,
+        0x6E, 0x13, 0x26, 0x8F,
+        0x61, 0xE0, 0x85, 0xF6,
+        0x3C, 0x82, 0xEA, 0xC2
+    };
+
+    unsigned char expected[] = {
+        0x6B, 0x85, 0xD3, 0xF0,
+        0x40, 0xAD, 0xBB, 0x82,
+        0x8A, 0xD8, 0x91, 0x31,
+        0xCD, 0xC4, 0x2C, 0xB3
+    };
+
+    aes_mix_columns(state);
+
+    for (int i = 0; i < 16; i++)
+        CU_ASSERT_EQUAL(expected[i], state[i]);
+}
+
 CUNIT_CI_RUN("test_aes",
     CUNIT_CI_TEST(test_aes_key_expansion),
-    CUNIT_CI_TEST(test_aes_shiftrows)
+    CUNIT_CI_TEST(test_aes_shiftrows),
+    CUNIT_CI_TEST(test_aes_mix_columns)
 )

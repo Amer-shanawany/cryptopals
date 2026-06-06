@@ -248,3 +248,22 @@ void aes_shiftrows(unsigned char * state) {
 	aes_swap_bytes(state + 3, state + 11);
 	aes_swap_bytes(state + 3, state + 15);
 }
+
+void aes_mix_columns(unsigned char * state) {
+    for (int i = 0; i < 4; i++) {
+        unsigned char * a0 = (state + 0 + (i * 4));
+        unsigned char * a1 = (state + 1 + (i * 4));
+        unsigned char * a2 = (state + 2 + (i * 4));
+        unsigned char * a3 = (state + 3 + (i * 4));
+
+        char r0 = aes_x_times(*a0, 2) ^ aes_x_times(*a1, 3) ^ *a2 ^ *a3;
+        char r1 = *a0 ^ aes_x_times(*a1, 2) ^ aes_x_times(*a2, 3) ^ *a3;
+        char r2 = *a0 ^ *a1 ^ aes_x_times(*a2, 2) ^ aes_x_times(*a3, 3);
+        char r3 = aes_x_times(*a0, 3) ^ *a1 ^ *a2 ^ aes_x_times(*a3, 2);
+
+        *a0 = r0;
+        *a1 = r1;
+        *a2 = r2;
+        *a3 = r3;
+    }
+}
