@@ -41,5 +41,7 @@ int aes_key_expansion(struct aes_context * ctx);
 
 void aes_shiftrows(unsigned char * state);
 void aes_mix_columns(unsigned char * state);
-
+void aes_add_round_key(unsigned char * state, unsigned char * round_key);
+void aes_subword(unsigned char *word);
+bytes_t * aes_encrypt(char *input, char* key, enum aes aes);
 #endif//_AES_H_

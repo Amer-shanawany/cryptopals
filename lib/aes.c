@@ -88,7 +88,6 @@ const unsigned char subtitution_box[16][16] = {
 	{ 0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16 }
 };
 
-
 // Table 5. Round constantsRcon[j]
 const unsigned char round_constant[10][4] = {
     {0x01, 0x0 ,0x0, 0x0},
@@ -115,27 +114,36 @@ inline unsigned int get_output_index(unsigned int row, unsigned int column) {
     return row + (column * 4);
 }
 
+void aes_subbyte(unsigned char *byte) {
+	unsigned char col = *byte >> 4;
+	unsigned char row = *byte & 0x0F;
+	*byte = subtitution_box[col][row];
+}
+
+void aes_subbytes(unsigned char *state) {
+    for (int i = 0; i < STATE_SIZE; i++)
+        aes_subbyte(state + i);
+}
 
 // AES steps
-int aes_cipher(char * input, unsigned char * expaned_key, enum aes_key_rounds rounds) {
+void aes_cipher(char * input, struct aes_context * ctx) {
     // 1 input -> state
-    bytes_t *input_bytes = bytes_new_from_string(input, STATE_SIZE);
-    if (!input_bytes)
-        return -1;
+    memcpy(ctx->state->data, input, STATE_SIZE);
 
     // 2 add_round_key
+    aes_add_round_key(ctx->state->data, ctx->key_schedule->data);
+
+    for (int round = 1; round < ctx->key_rounds; round++) {
+        aes_subbytes(ctx->state->data);
+        aes_shiftrows(ctx->state->data);
+        aes_mix_columns(ctx->state->data);
+        aes_add_round_key(ctx->state->data, (ctx->key_schedule->data + (round * STATE_SIZE)));
+    }
 
     // 3 for rounds
-    //  SUBBYTES
-    //  SHIFTROWS
-    //  MIXCOLUMNS
-    //  ADDROUNDKEY
-
-    //  SUBBYTES
-    //  SHIFTROWS
-    //  MIXCOLUMNS
-
-    return 0;
+    aes_subbytes(ctx->state->data);
+    aes_shiftrows(ctx->state->data);
+    aes_add_round_key(ctx->state->data, (ctx->key_schedule->data + ((ctx->key_rounds) * STATE_SIZE)));
 }
 
 int aes_invcipher();
@@ -176,11 +184,6 @@ void aes_rotword(unsigned char * word) {
 	*(word + 3) = temp;
 }
 
-void aes_subbyte(unsigned char *byte) {
-	unsigned char col = *byte >> 4;
-	unsigned char row = *byte & 0x0F;
-	*byte = subtitution_box[col][row];
-}
 
 void aes_subword(unsigned char *word) {
 	for (int i = 0; i < 4; i++) {
@@ -266,4 +269,40 @@ void aes_mix_columns(unsigned char * state) {
         *a2 = r2;
         *a3 = r3;
     }
+}
+
+void aes_add_round_key(unsigned char * state, unsigned char * round_key) {
+    for (int i = 0; i < STATE_SIZE; i++)
+        *(state + i) = *(state + i) ^ *(round_key + i);
+}
+
+bytes_t * aes_encrypt(char *input, char* key, enum aes aes) {
+    struct aes_context* ctx = aes_init_context(aes);
+
+    if (!ctx)
+        return NULL;
+
+    for (int i = 0; i < 16; i++) {
+        ctx->key->data[i] = key[i];
+    }
+
+    int ret = aes_key_expansion(ctx);
+    if (ret) {
+        aes_free_context(&ctx);
+        return NULL;
+    }
+
+    aes_cipher(input,ctx);
+
+    bytes_t * out = bytes_new(STATE_SIZE);
+    if (!out) {
+        aes_free_context(&ctx);
+        return NULL;
+    }
+
+    memcpy(out->data, ctx->state->data, STATE_SIZE);
+
+    aes_free_context(&ctx);
+
+    return out;
 }
