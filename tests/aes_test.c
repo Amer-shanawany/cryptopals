@@ -120,8 +120,38 @@ void test_aes_mix_columns() {
         CU_ASSERT_EQUAL(expected[i], state[i]);
 }
 
+void test_aes_encrypt_AES128() {
+    char input[] = {
+        0x32, 0x43, 0xf6, 0xa8,
+        0x88, 0x5a, 0x30, 0x8d,
+        0x31, 0x31, 0x98, 0xa2,
+        0xe0, 0x37, 0x07, 0x34,
+    };
+
+    char key[] = {
+        0x2b, 0x7e, 0x15, 0x16,
+        0x28, 0xae, 0xd2, 0xa6,
+        0xab, 0xf7, 0x15, 0x88,
+        0x09, 0xcf, 0x4f, 0x3c,
+    };
+
+    unsigned char expected[] = {
+        0x39, 0x25, 0x84, 0x1D,
+        0x02, 0xDC, 0x09, 0xFB,
+        0xDC, 0x11, 0x85, 0x97,
+        0x19, 0x6A, 0x0B, 0x32
+    };
+
+    bytes_t * out = aes_encrypt(input, key, AES_128);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(out);
+
+    for (int i = 0; i < 16; i++)
+        CU_ASSERT_EQUAL_FATAL(expected[i], out->data[i]);
+}
+
 CUNIT_CI_RUN("test_aes",
     CUNIT_CI_TEST(test_aes_key_expansion),
     CUNIT_CI_TEST(test_aes_shiftrows),
-    CUNIT_CI_TEST(test_aes_mix_columns)
+    CUNIT_CI_TEST(test_aes_mix_columns),
+    CUNIT_CI_TEST(test_aes_encrypt_AES128)
 )
