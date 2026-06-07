@@ -327,6 +327,57 @@ static void test_challenge6()
 	bytes_free(&the_key);
 }
 
+static void test_challenge7()
+{
+    FILE * file = fopen("7.txt", "r");
+    if (!file) {
+        CU_FAIL_FATAL("couldn't find the test file 7.txt");
+    }
+
+	size_t length = 0;
+	ssize_t nread = 0;
+    ssize_t total = 0;
+	char *encrypted = NULL;
+	char *line = NULL;
+
+	while ((nread = getline(&line, &length, file)) != -1) {
+		if (line[nread - 1] == '\n') {
+			line[nread - 1] = '\0';
+			nread--;
+		}
+
+        char *temp = (char *) realloc(encrypted, total+nread);
+		memcpy(temp + total, line, nread);
+        encrypted = temp;
+        total += nread;
+        free(line);
+        line = NULL;
+        length = 0;
+	}
+    free(line);
+	fclose(file);
+
+	bytes_t *encrypted_bytes = base64_to_bytes(encrypted);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(encrypted_bytes);
+	free(encrypted);
+
+    char key[] = "YELLOW SUBMARINE";
+    size_t block_size = 16;
+    char *decrypted = malloc(block_size + 1);
+    for (int block = 0; block < encrypted_bytes->length / block_size; block++) {
+        bytes_t * out = aes_decrypt((char *) encrypted_bytes->data + (block * block_size), key, AES_128);
+	    CU_ASSERT_PTR_NOT_NULL_FATAL(out);
+        memcpy(decrypted, out->data, block_size);
+        decrypted[block_size] = '\0';
+        printf("%s", decrypted);
+        bytes_free(&out);
+    }
+    printf("\n");
+    free(decrypted);
+
+    bytes_free(&encrypted_bytes);
+}
+
 CUNIT_CI_RUN("set1",
     CUNIT_CI_TEST(test_challenge1),
     CUNIT_CI_TEST(test_challenge2),
@@ -334,4 +385,5 @@ CUNIT_CI_RUN("set1",
     CUNIT_CI_TEST(test_challenge4),
     CUNIT_CI_TEST(test_challenge5),
     CUNIT_CI_TEST(test_challenge6_hamming_distance),
-    CUNIT_CI_TEST(test_challenge6));
+    CUNIT_CI_TEST(test_challenge6),
+    CUNIT_CI_TEST(test_challenge7));

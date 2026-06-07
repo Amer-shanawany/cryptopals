@@ -50,26 +50,6 @@ target_link_libraries(
 )
 
 add_library(
-    libcryptopals
-    INTERFACE
-)
-
-target_link_libraries(
-    libcryptopals
-    INTERFACE
-    libbytes
-    libbase64
-    libutils
-)
-
-target_include_directories(
-    libcryptopals
-    INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
-    $<INSTALL_INTERFACE:include>
-)
-
-add_library(
 	libaes
 	SHARED
 	aes.c
@@ -86,6 +66,27 @@ target_link_libraries(
 target_include_directories(
     libaes
     PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+    $<INSTALL_INTERFACE:include>
+)
+
+add_library(
+    libcryptopals
+    INTERFACE
+)
+
+target_link_libraries(
+    libcryptopals
+    INTERFACE
+    libbytes
+    libbase64
+    libutils
+    libaes
+)
+
+target_include_directories(
+    libcryptopals
+    INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
     $<INSTALL_INTERFACE:include>
 )
