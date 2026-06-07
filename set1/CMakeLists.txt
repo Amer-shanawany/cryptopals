@@ -12,5 +12,6 @@ target_link_libraries(
 configure_file(4.txt "${CMAKE_CURRENT_BINARY_DIR}/4.txt" COPYONLY)
 configure_file(6.txt "${CMAKE_CURRENT_BINARY_DIR}/6.txt" COPYONLY)
 configure_file(7.txt "${CMAKE_CURRENT_BINARY_DIR}/7.txt" COPYONLY)
+configure_file(8.txt "${CMAKE_CURRENT_BINARY_DIR}/8.txt" COPYONLY)
 
 add_test(NAME set1 COMMAND set1)

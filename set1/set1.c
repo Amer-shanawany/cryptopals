@@ -7,6 +7,7 @@
 #include <stddef.h>
 
 #include <cryptopals.h>
+#include <string.h>
 
 static void test_challenge1()
 {
@@ -378,6 +379,60 @@ static void test_challenge7()
     bytes_free(&encrypted_bytes);
 }
 
+static void test_challenge8()
+{
+    FILE * file = fopen("8.txt", "r");
+    if (!file) {
+        CU_FAIL_FATAL("couldn't find the test file 8.txt");
+    }
+
+    size_t length = 0;
+	ssize_t nread = 0;
+    ssize_t total = 0;
+	char *encrypted = NULL;
+	char *line = NULL;
+
+	while ((nread = getline(&line, &length, file)) != -1) {
+		if (line[nread - 1] == '\n') {
+			line[nread - 1] = '\0';
+			nread--;
+		}
+
+        char *temp = (char *) realloc(encrypted, total+nread);
+		memcpy(temp + total, line, nread);
+        encrypted = temp;
+        total += nread;
+        free(line);
+        line = NULL;
+        length = 0;
+	}
+    free(line);
+	fclose(file);
+
+    const size_t block_size = 16;
+    char * block = malloc(block_size + 1);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(block);
+
+    printf("\n");
+    for (int i = 0; i < strlen(encrypted) / block_size; i++) {
+        memcpy(block, encrypted + (i * block_size), block_size);
+        block[block_size] = '\0';
+        // compare block to each block and rate it
+        int rating = 0;
+        for (int j = 0; j < strlen(encrypted) / block_size; j++) {
+            if (!strncmp(block, encrypted + (j * block_size), block_size)) {
+                rating++;
+            }
+        }
+
+        if (rating > 1) {
+            printf("block# %d repeated: %d: %s\n", i, rating, block);
+        }
+    }
+
+    free(encrypted);
+}
+
 CUNIT_CI_RUN("set1",
     CUNIT_CI_TEST(test_challenge1),
     CUNIT_CI_TEST(test_challenge2),
@@ -386,4 +441,5 @@ CUNIT_CI_RUN("set1",
     CUNIT_CI_TEST(test_challenge5),
     CUNIT_CI_TEST(test_challenge6_hamming_distance),
     CUNIT_CI_TEST(test_challenge6),
-    CUNIT_CI_TEST(test_challenge7));
+    CUNIT_CI_TEST(test_challenge7),
+    CUNIT_CI_TEST(test_challenge8));
