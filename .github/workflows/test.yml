@@ -1,0 +1,27 @@
+name: Test
+
+on:
+  push:
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y cmake
+
+      - name: Build
+        run: |
+          cmake -S . -B build
+          cmake --build build
+
+      - name: Run Tests
+        run: |
+          ctest --test-dir build  --output-on-failure --no-tests=error
+

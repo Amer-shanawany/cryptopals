@@ -1,0 +1,47 @@
+name: Valgrind
+
+on:
+  push:
+
+jobs:
+  valgrind:
+    name: Run Valgrind
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y valgrind cmake
+
+    - name: Build
+      run: |
+        cmake -S . -B build
+        cmake --build build
+ 
+    - name: Run Valgrind
+      run: |
+        valgrind_check() {
+          local binary="$1"
+          local name="$(basename ${binary})"
+          local path="$(dirname ${binary})"
+          echo "::group::${name}"
+          cd ${path}
+          valgrind --leak-check=full --show-leak-kinds=all "./${name}"
+          echo "::endgroup::"
+        }
+
+        cd build
+        BUILD_DIR=$(pwd)
+
+        BINS=(
+          "${BUILD_DIR}/tests/aes_test"
+          "${BUILD_DIR}/tests/base64_test"
+          "${BUILD_DIR}/tests/bytes_test"
+          "${BUILD_DIR}/tests/utils_test"
+        )
+        for bin in "${BINS[@]}"; do
+          valgrind_check "${bin}"
+        done

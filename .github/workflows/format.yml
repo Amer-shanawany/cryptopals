@@ -1,0 +1,23 @@
+name: Format
+
+on:
+  push:
+
+jobs:
+  format:
+    name: Run clang-format
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y clang-format-20
+
+    - name: Format Check
+      run: |
+        find . \
+          \( -name "*.c" -o -name "*.h" \) \
+          -exec clang-format-20 --dry-run --Werror {} +
