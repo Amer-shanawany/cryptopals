@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.24)
 project(Cryptopals)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g")
 
 include(FetchContent)
 
