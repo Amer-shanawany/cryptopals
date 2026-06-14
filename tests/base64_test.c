@@ -16,7 +16,7 @@ struct vector test_vector[] = {
     {"foo",    "Zm9v"    },
     {"foob",   "Zm9vYg=="},
     {"fooba",  "Zm9vYmE="},
-    {"foobar", "Zm9vYmFy"}
+    {"foobar", "Zm9vYmFy"},
 };
 
 static void test_bytes_to_base64() {

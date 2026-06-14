@@ -9,7 +9,8 @@ static const char base64_encode[] = {
     'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
     'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/', '='};
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/', '=',
+};
 
 static const unsigned char base64_decode[] = {
     0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, /* 0   */
@@ -119,7 +120,7 @@ bytes_t* base64_to_bytes(char* input) {
         unsigned char third  = base64_decode[input[i + 2]];
         unsigned char fourth = base64_decode[input[i + 3]];
 
-        output->data[o]     = first << 2 | second >> 4;
+        output->data[o + 0] = first << 2 | second >> 4;
         output->data[o + 1] = (second & 0xF) << 4 | third >> 2;
         output->data[o + 2] = (third & 0x3) << 6 | fourth;
     }

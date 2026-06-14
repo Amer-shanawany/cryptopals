@@ -3,7 +3,7 @@
 
 #include <bytes.h>
 
-static void test_bytes_new() {
+void test_bytes_new() {
     size_t length = 256;
     bytes_t* new  = bytes_new(length);
     CU_ASSERT_PTR_NOT_NULL(new);
@@ -80,6 +80,7 @@ static void test_bytes_to_hex_string() {
     CU_ASSERT_STRING_EQUAL(actual_string, expected_string)
 
     bytes_free(&test_bytes);
+    free(actual_string);
 }
 
 static void test_bytes_to_hex_string_invalid() {
@@ -88,7 +89,9 @@ static void test_bytes_to_hex_string_invalid() {
     CU_ASSERT_PTR_NULL(string);
 
     invalid = malloc(sizeof(bytes_t));
-    string  = bytes_to_hex_string(invalid);
+    memset(invalid, 0, sizeof(bytes_t));
+
+    string = bytes_to_hex_string(invalid);
     CU_ASSERT_PTR_NULL(string);
     free(invalid);
 
@@ -107,6 +110,8 @@ static void test_bytes_to_string() {
     CU_ASSERT_PTR_NOT_NULL_FATAL(result);
 
     CU_ASSERT_STRING_EQUAL(result, string);
+    free(result);
+    bytes_free(&b);
 }
 
 static void test_bytes_to_string_invalid() {
@@ -122,9 +127,10 @@ static void test_bytes_to_string_invalid() {
 
     result = bytes_to_string(&b);
     CU_ASSERT_PTR_NULL(result);
+    free(result);
 }
 
-static void test_bytes_xor() {
+void test_bytes_xor() {
     char* expected_string = "abcdef";
     bytes_t* expected     = hex_string_to_bytes(expected_string);
 
@@ -143,17 +149,20 @@ static void test_bytes_xor() {
     bytes_free(&first);
     bytes_free(&second);
     bytes_free(&actual);
+    bytes_free(&expected);
 }
 
 static void test_bytes_xor_invalid() {
     bytes_t* invalid = bytes_xor(NULL, NULL);
     CU_ASSERT_PTR_NULL(invalid);
 
-    bytes_t* first = malloc(sizeof(bytes_t*));
-    invalid        = bytes_xor(first, NULL);
+    bytes_t* first = malloc(sizeof(bytes_t));
+    memset(first, 0, sizeof(bytes_t));
+
+    invalid = bytes_xor(first, NULL);
     CU_ASSERT_PTR_NULL(invalid);
 
-    bytes_t* second = malloc(sizeof(bytes_t*));
+    bytes_t* second = malloc(sizeof(bytes_t));
     invalid         = bytes_xor(NULL, second);
     CU_ASSERT_PTR_NULL(invalid);
 

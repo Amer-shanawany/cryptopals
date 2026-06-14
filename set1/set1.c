@@ -169,6 +169,10 @@ static void test_challenge5() {
                    expected[i]);
     }
     CU_ASSERT_STRING_EQUAL(expected, output);
+
+    bytes_free(&key_bytes);
+    bytes_free(&string_bytes);
+    free(output);
 }
 
 static void test_challenge6_hamming_distance() {
@@ -210,7 +214,8 @@ static void test_challenge6() {
             nread--;
         }
 
-        char* temp = (char*)realloc(encrypted, total + nread);
+        char* temp = (char*)realloc(encrypted, total + nread + 1);
+        memset(temp + total, 0, nread + 1);
         memcpy(temp + total, line, nread);
         encrypted = temp;
         total += nread;
@@ -345,7 +350,8 @@ static void test_challenge7() {
             nread--;
         }
 
-        char* temp = (char*)realloc(encrypted, total + nread);
+        char* temp = (char*)realloc(encrypted, total + nread + 1);
+        memset(temp + total, 0, nread + 1);
         memcpy(temp + total, line, nread);
         encrypted = temp;
         total += nread;
@@ -396,7 +402,8 @@ static void test_challenge8() {
             nread--;
         }
 
-        char* temp = (char*)realloc(encrypted, total + nread);
+        char* temp = (char*)realloc(encrypted, total + nread + 1);
+        memset(temp + total, 0, nread + 1);
         memcpy(temp + total, line, nread);
         encrypted = temp;
         total += nread;

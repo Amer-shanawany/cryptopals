@@ -14,7 +14,7 @@ static void test_hamming_distance() {
     struct test_case cases[] = {
         {"A",       "B",       2},
         {"karolin", "kathrin", 9},
-        {"00000",   "11111",   5}
+        {"00000",   "11111",   5},
     };
 
     int total = sizeof(cases) / sizeof(cases[0]);
@@ -71,6 +71,7 @@ static void test_bytes_bigram_analysis() {
 
     float weight = bytes_bigram_analysis(t);
     CU_ASSERT_DOUBLE_EQUAL(weight, 15.4 * 3, 1);
+    bytes_free(&t);
 }
 
 CUNIT_CI_RUN("test_utils", CUNIT_CI_TEST(test_hamming_distance),

@@ -8,11 +8,11 @@ bytes_t* bytes_new(size_t length) {
     if (!length)
         return NULL;
 
-    bytes_t* new = (bytes_t*)malloc(sizeof(bytes_t*));
+    bytes_t* new = malloc(sizeof(bytes_t));
     if (!new)
         return NULL;
 
-    new->data = (unsigned char*)malloc(length);
+    new->data = malloc(length * sizeof(unsigned char));
     if (!new->data) {
         free(new);
         return NULL;
@@ -62,7 +62,7 @@ bytes_t* hex_string_to_bytes(char* input) {
     }
     length /= 2;
 
-    bytes_t* output = (bytes_t*)malloc(sizeof(bytes_t*));
+    bytes_t* output = (bytes_t*)malloc(sizeof(bytes_t));
     if (!output)
         return NULL;
 
@@ -97,7 +97,7 @@ char* bytes_to_hex_string(bytes_t* input) {
         sprintf(&output[i * 2], "%02hhX", input->data[i]);
     }
 
-    output[input->length * 2 + 1] = '\0';
+    output[input->length * 2] = '\0';
     return output;
 }
 
