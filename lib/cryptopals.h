@@ -2,8 +2,8 @@
 #define _CRYPTOPALS_H_
 
 #include <aes.h>
-#include <bytes.h>
 #include <base64.h>
+#include <bytes.h>
 #include <utils.h>
 
 #endif // _CRYPTOPALS_H_

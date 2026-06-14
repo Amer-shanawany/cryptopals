@@ -1,25 +1,24 @@
 #include "bytes.h"
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-bytes_t* bytes_new(size_t length)
-{
+bytes_t* bytes_new(size_t length) {
     if (!length)
         return NULL;
 
-    bytes_t *new = (bytes_t *) malloc(sizeof(bytes_t *));
+    bytes_t* new = (bytes_t*)malloc(sizeof(bytes_t*));
     if (!new)
         return NULL;
 
-    new->data = (unsigned char*) malloc(length);
+    new->data = (unsigned char*)malloc(length);
     if (!new->data) {
         free(new);
         return NULL;
     }
 
-	memset((void *) new->data, 0x0, length);
+    memset((void*)new->data, 0x0, length);
 
     new->length = length;
     return new;
@@ -32,21 +31,20 @@ bytes_t* bytes_new_from_string(char* string, size_t length) {
     if (!length)
         return NULL;
 
-    bytes_t *new = bytes_new(length);
+    bytes_t* new = bytes_new(length);
     if (!new)
         return NULL;
 
     memcpy(new->data, string, length);
-    
-    return new;    
+
+    return new;
 }
 
-void bytes_free(bytes_t** bytes)
-{
+void bytes_free(bytes_t** bytes) {
     if (*bytes) {
         if ((*bytes)->data) {
             free((*bytes)->data);
-            (*bytes)->data = NULL;
+            (*bytes)->data   = NULL;
             (*bytes)->length = 0;
         }
         free(*bytes);
@@ -54,8 +52,7 @@ void bytes_free(bytes_t** bytes)
     }
 }
 
-bytes_t* hex_string_to_bytes(char* input)
-{
+bytes_t* hex_string_to_bytes(char* input) {
     if (!input)
         return NULL;
 
@@ -88,12 +85,11 @@ bytes_t* hex_string_to_bytes(char* input)
     return output;
 }
 
-char* bytes_to_hex_string(bytes_t* input)
-{
+char* bytes_to_hex_string(bytes_t* input) {
     if (!input || !input->data || !input->length)
         return NULL;
 
-    char* output = (char*) malloc(input->length * 2 + 1);
+    char* output = (char*)malloc(input->length * 2 + 1);
     if (!output)
         return NULL;
 
@@ -109,7 +105,7 @@ char* bytes_to_string(bytes_t* input) {
     if (!input || !input->data || !input->length)
         return NULL;
 
-    char *result = malloc(input->length + 1);
+    char* result = malloc(input->length + 1);
     if (!result)
         return NULL;
 
@@ -119,8 +115,7 @@ char* bytes_to_string(bytes_t* input) {
     return result;
 }
 
-bytes_t* bytes_xor(bytes_t* first, bytes_t* second)
-{
+bytes_t* bytes_xor(bytes_t* first, bytes_t* second) {
     if (!first || !second)
         return NULL;
 
