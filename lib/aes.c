@@ -8,6 +8,7 @@
 #define STATE_LENGTH 4
 #define STATE_ROWS STATE_LENGTH
 #define STATE_COLS STATE_LENGTH
+#define WORD_BYTES 4
 
 struct aes_context* aes_init_context(enum aes aes) {
     struct aes_context* ctx = malloc(sizeof(struct aes_context));
@@ -47,7 +48,7 @@ struct aes_context* aes_init_context(enum aes aes) {
         return NULL;
     }
 
-    ctx->key = bytes_new(ctx->key_size * 4);
+    ctx->key = bytes_new(ctx->key_size * WORD_BYTES);
     if (!ctx->key) {
         bytes_free(&ctx->key_schedule);
         bytes_free(&ctx->state);
@@ -393,9 +394,7 @@ bytes_t* aes_encrypt(char* input, char* key, enum aes aes) {
     if (!ctx)
         return NULL;
 
-    for (int i = 0; i < 16; i++) {
-        ctx->key->data[i] = key[i];
-    }
+    memcpy(ctx->key->data, key, ctx->key_size * WORD_BYTES);
 
     int ret = aes_key_expansion(ctx);
     if (ret) {
@@ -424,9 +423,7 @@ bytes_t* aes_decrypt(char* input, char* key, enum aes aes) {
     if (!ctx)
         return NULL;
 
-    for (int i = 0; i < 16; i++) {
-        ctx->key->data[i] = key[i];
-    }
+    memcpy(ctx->key->data, key, ctx->key_size * WORD_BYTES);
 
     int ret = aes_key_expansion(ctx);
     if (ret) {
